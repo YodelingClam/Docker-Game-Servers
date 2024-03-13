@@ -9,7 +9,7 @@ services:
       - minecraft
     environment:
       EULA: "true"
-    command: sh -c "/add-route.sh 'mc.${SERVER}.zackattack.games' ${SERVER}"
+    command: "/add-route.sh 'mc.${SERVER}.zackattack.games' ${SERVER}"
 networks:
   minecraft:
     external: true
