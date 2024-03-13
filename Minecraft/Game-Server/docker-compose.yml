@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  $SERVER: #change this
+    image: itzg/minecraft-server:latest
+    volumes:
+      - /opt/minecraft/${SERVER}:/data
+      - /home/${USER}/add-route.sh:/add-route.sh
+    networks:
+      - minecraft
+    environment:
+      EULA: "true"
+    command: sh -c "/add-route.sh 'mc.${SERVER}.zackattack.games' ${SERVER}"
+networks:
+  minecraft:
+    external: true
