@@ -1,0 +1,84 @@
+version: '3.8'
+services:
+  MC-Route:
+    image: ubuntu
+    volumes:
+      - /home/${USER}/add-route.sh:/add-route.sh
+    networks:
+      - minecraft
+    entrypoint: "/add-route.sh '${SERVER}.zackattack.games' ${SERVER}"
+  HellaEnchanted: #change this
+    image: itzg/minecraft-server:latest
+    volumes:
+      - /opt/minecraft/${SERVER}:/data
+      - /home/${USER}/add-route.sh:/add-route.sh
+    networks:
+      - minecraft
+      - default
+    environment:
+      EULA: "true"
+      TYPE: FABRIC
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      MEMORY: 6G
+      USE_AIKAR_FLAGS: true
+    command: "/add-route.sh '${SERVER}.zackattack.games' ${SERVER}"
+  restore-backup:
+    # Same image as mc, but any base image with bash and tar will work
+    image: itzg/mc-backup
+    restart: "no"
+    entrypoint: restore-tar-backup
+    volumes:
+      # Must be same mount as mc service, needs to be writable
+      - /opt/minecraft/${SERVER}:/data
+      # Must be same mount as backups service, but can be read-only
+      - /mnt/mc-backups:/backups:ro
+  backups:
+    image: itzg/mc-backup
+    depends_on:
+      HellaEnchanted:
+        condition: service_healthy
+    environment:
+      BACKUP_INTERVAL: "2h"
+      RCON_HOST: HellaEnchanted
+      RCON_PASSWORD: ${RCON_PASSWORD}
+      RCON_PORT: 25575
+      # since this service waits for mc to be healthy, no initial delay is needed
+      INITIAL_DELAY: 0
+    volumes:
+      - /opt/minecraft/${SERVER}:/data:ro
+      - /mnt/mc-backups:/backups
+  bluemap:
+    image: ghcr.io/bluemap-minecraft/bluemap:latest
+    depends_on:
+      HellaEnchanted:
+          condition: service_healthy
+    restart: unless-stopped
+    command: -r -u -w
+    volumes:
+      - '/opt/minecraft/${SERVER}-bluemap/config:/app/config'
+      - '/opt/minecraft/${SERVER}/world:/app/world'
+      - '/opt/minecraft/${SERVER}/world_nether:/world_nether'
+      - '/opt/minecraft/${SERVER}/world_the_end:/world_the_end'
+      - '/opt/minecraft/${SERVER}-bluemap/data:/app/data'
+      - '/opt/minecraft/${SERVER}-bluemap/web:/app/web'
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${SERVER}.entrypoints=http"
+      - "traefik.http.routers.${SERVER}.rule=Host(`${SERVER}.zackattack.games`)"
+      - "traefik.http.middlewares.${SERVER}-https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.routers.${SERVER}.middlewares=${SERVER}-https-redirect"
+      - "traefik.http.routers.${SERVER}-secure.entrypoints=https"
+      - "traefik.http.routers.${SERVER}-secure.rule=Host(`${SERVER}.zackattack.games`)"
+      - "traefik.http.routers.${SERVER}-secure.tls=true"
+      - "traefik.http.routers.${SERVER}-secure.service=${SERVER}"
+      - "traefik.docker.network=proxy"
+      - "traefik.http.services.${SERVER}.loadbalancer.server.port=8100"
+    networks:
+      - proxy
+
+networks:
+  default:  
+  minecraft:
+    external: true
+  proxy:
+    external: true
