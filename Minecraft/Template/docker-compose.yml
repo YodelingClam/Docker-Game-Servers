@@ -1,5 +1,12 @@
 version: '3.8'
 services:
+  MC-Route:
+    image: ubuntu
+    volumes:
+      - /home/${USER}/add-route.sh:/add-route.sh
+    networks:
+      - minecraft
+    entrypoint: "/add-route.sh '${SERVER}.zackattack.games' ${SERVER}"
   $SERVER: #change this
     image: itzg/minecraft-server:latest
     volumes:
@@ -9,7 +16,6 @@ services:
       - minecraft
     environment:
       EULA: "true"
-    command: "/add-route.sh 'mc.${SERVER}.zackattack.games' ${SERVER}"
 networks:
   minecraft:
     external: true
