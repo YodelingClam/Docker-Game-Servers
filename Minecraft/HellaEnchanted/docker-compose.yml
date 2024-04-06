@@ -21,6 +21,15 @@ services:
       RCON_PASSWORD: ${RCON_PASSWORD}
       MEMORY: 6G
       USE_AIKAR_FLAGS: true
+      DIFFICULTY: hard
+      WHITELIST: |
+        b593a046-2967-4322-92a2-58d27bcddebd
+      EXISTING_WHITELIST_FILE: MERGE
+      ENFORCE_WHITELIST: True
+      OPS: |
+        b593a046-2967-4322-92a2-58d27bcddebd
+      EXISTING_OPS_FILE: MERGE
+      SEED: 434533485056755
     command: "/add-route.sh '${SERVER}.zackattack.games' ${SERVER}"
   restore-backup:
     # Same image as mc, but any base image with bash and tar will work
